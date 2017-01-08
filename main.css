@@ -1,0 +1,39 @@
+
+#wrapper{
+    width: 1000px;
+    margin: 0 auto;
+}
+.mapUnit{
+    background:#DCDCDC;
+    border-style: none;
+    width: 20px;
+    height: 20px;
+    float:left;;
+    margin:0;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+.roomCanvas{
+    box-sizing: border-box;
+    background :#778899;
+    position :absolute;
+    border-style:solid;
+    margin:0;
+}
+.mapArrayUnit{
+    margin:0;
+    width: 20px;
+    height: 20px;
+}
+#mapSection{
+    margin:0;
+    background: yellow;
+        box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+.clear{
+    clear: both;
+}
+
