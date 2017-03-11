@@ -8,7 +8,7 @@
     border-style: none;
     width: 20px;
     height: 20px;
-    float:left;;
+    float:left;
     margin:0;
     box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -36,4 +36,10 @@
 .clear{
     clear: both;
 }
+.room{
+    background-color: #FFFFDD;
+}
 
+.empty{
+    background-color: black;
+}
