@@ -7,8 +7,8 @@
     var floorUnitId = 54665;
      var dataMap;
     //one unit size
-    const unitWidth  = 20;
-    const unitHeight = 20;
+    const unitWidth  = 60;
+    const unitHeight = 60;
     //css variables
     const borderStyle = "2px solid #D8D3C3";
     //define the section thats hold the map
@@ -94,6 +94,7 @@
                         else{
                             unit.style.borderRight = borderStyle;
                         }
+
                     }
                 }
             });
@@ -106,18 +107,22 @@
                     switch(entrance.direction) {
                         case "left":
                             unit.style.borderLeft = "none";
+                            unit.setAttribute("roomEntranceDirection","left"); //for connect the room to corridor at "generateCorridor" function
                             break;
                         case "right":
                             unit.style.borderRight ="none";
+                            unit.setAttribute("roomEntranceDirection","right"); //for connect the room to corridor at "generateCorridor" function
                             break;
                         case "up":
                             unit.style.borderTop = "none";
+                            unit.setAttribute("roomEntranceDirection","up"); //for connect the room to corridor at "generateCorridor" function
                             break;
                         case "down":
                             unit.style.borderBottom = "none";
+                            unit.setAttribute("roomEntranceDirection","down"); //for connect the room to corridor at "generateCorridor" function
                             break;
                         default:
-                    }
+                     }
                 })
             }
 
@@ -139,11 +144,9 @@
             for(let j = 0;j<flourHeight;j++){
                 let cell =  document.getElementById("x"+j+"y"+i);
                 let type = cell.getAttribute('type');
-                let unit;
                 let cellUnitId = cell.getAttribute('name');
+                let entrance = [];
                 if(type === 'corridor'){
-                    unit =  document.getElementById("x"+j+"y"+i);
-                    let entrance = [];
                     //up
                     let neighborCell = document.getElementById("x"+j+"y"+(i-1));
                     if(null !== neighborCell){
@@ -219,7 +222,7 @@
                     }
 
                     let corridor = {
-                        spaceUnitId:cellUnitId,
+                        id:cellUnitId,
                         width:1,
                         height:1,
                         coordX:j,
@@ -231,11 +234,50 @@
                     };
                     dataMap.push(corridor);
                 }
+                else { //the current cell is room entrance
+                    let roomEntranceDirection = cell.getAttribute('roomEntranceDirection');
+                    let neighborCell;
+                    switch (roomEntranceDirection){
+                        case "left":
+                            neighborCell = document.getElementById("x"+(j-1)+"y"+i);
+                            entrance.push({
+                                neighborId:neighborCell.getAttribute('name'),
+                                approachable:1
+                            });
+                            break;
+                        case "right":
+                            neighborCell = document.getElementById("x"+(j+1)+"y"+i);
+                              break;
+                        case "up":
+                            neighborCell = document.getElementById("x"+j+"y"+(i-1));
+                            break;
+                        case "down":
+                            neighborCell = document.getElementById("x"+j+"y"+(i+1));
+                            break;
+                        default:
+                    }
+                    if(neighborCell!==null && neighborCell!==undefined){
+                        entrance.push({
+                          neighborId:neighborCell.getAttribute('name'),
+                          approachable:1
+                        });
+                        var spaceUnit = dataMap.find(function (spaceUnitObject) {
+                            return spaceUnitObject.id === cellUnitId
+                        });
+                        if(spaceUnit !== null && spaceUnit !== undefined){
+                            let targetEntrance = spaceUnit.entrance.find(function (entry) { //find the entrance in dataMap
+                                return entry.x === j && entry.y === i;
+                            });
+                            if(targetEntrance !== null && targetEntrance !== undefined){//successful result
+                                targetEntrance.neighborId = entrance[0].neighborId;
+                            }
+                        }
+                    }
+
+                }
 
             }
         }
-     console.log(typeof dataMap);
-     console.log(dataMap);
     }
 
     function getJson() {
@@ -248,17 +290,15 @@
          if (myXMLhttpReq.readyState == XMLHttpRequest.DONE) {
              dataMap = JSON.parse(myXMLhttpReq.responseText);
              dataMap = dataMap.map;
-             console.log(typeof dataMap);
-             console.log(dataMap);
              createRooms(dataMap);
              createBorder(dataMap);
              generateCorridor();
-             var from = "a";
-             var to = "b";
+             var from = "2000";
+             var to = "247";
             var mapData = {
                 mapData:dataMap
             };
-             httpCall(domain,"/api/v1/mapConsumer/getPatch/54665x1y5/54665x2y0/1",mapData);
+             httpCall(domain,"/api/v1/mapConsumer/getPatch/"+from+"/"+to+"/1",mapData);
          }
      };
      myXMLhttpReq.send();

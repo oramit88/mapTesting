@@ -1,13 +1,13 @@
 
 #wrapper{
-    width: 1000px;
+    width: 100%;
     margin: 0 auto;
 }
 .mapUnit{
     background:#DCDCDC;
     border-style: none;
-    width: 20px;
-    height: 20px;
+    width: 60px;
+    height: 60px;
     float:left;
     margin:0;
     box-sizing: border-box;
@@ -23,8 +23,8 @@
 }
 .mapArrayUnit{
     margin:0;
-    width: 20px;
-    height: 20px;
+    width: 60px;
+    height: 60px;
 }
 #mapSection{
     margin:0;
@@ -45,7 +45,7 @@
 }
 
 .elevator{
-    background-size: 18px 18px;
+    background-size:58px 58px;
     background-image: url("image/elevator.png");
     border-color: #696969;
 }
