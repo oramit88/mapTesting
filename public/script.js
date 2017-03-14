@@ -2,9 +2,9 @@
 
 //floor units number
     var domain = "http://localhost:3000";
-    var flourWidth = 10;
-    var flourHeight = 10;
-    var floorUnitId = 54665;
+    var flourWidth;
+    var flourHeight;
+    var floorUnitId;
      var dataMap;
     //one unit size
     const unitWidth  = 60;
@@ -13,27 +13,25 @@
     const borderStyle = "2px solid #D8D3C3";
     //define the section thats hold the map
     const mapSection  = document.getElementById("mapSection");
-    mapSection.style.width = flourWidth * unitWidth +"px";
-    mapSection.style.height = flourHeight * unitHeight+"px";
 
     //create net of canvases units, give each one of theme id, and add them to the MapSection.
-    for(let i = 0;i<flourWidth;i++){
-        for(let j = 0;j<flourHeight;j++){
-            var newUnit = document.createElement("canvas");
-            newUnit.className = "mapUnit";
-            newUnit.id = "x"+j+"y"+i;
-            mapSection.appendChild(newUnit);
-            document.getElementById("x"+j+"y"+i).setAttribute("type","corridor");
-         }
-     }
+    function createFloor() {
+        mapSection.style.width = flourWidth * unitWidth +"px";
+        mapSection.style.height = flourHeight * unitHeight+"px";
+        for(let i = 0;i<flourWidth;i++){
+            for(let j = 0;j<flourHeight;j++){
+                var newUnit = document.createElement("canvas");
+                newUnit.className = "mapUnit";
+                newUnit.id = "x"+j+"y"+i;
+                mapSection.appendChild(newUnit);
+                document.getElementById("x"+j+"y"+i).setAttribute("type","corridor");
+            }
+        }
+    }
 
-
-
-    //create room whithout a room border
+    //create room without a room border
     function createRooms(roomsData){
-      //  console.log(roomsData);
         roomsData.forEach(function (room) {
-   //         console.log(room);
             room.zones.forEach(function (zone) {
                 for(let i = zone.topLeftY; i < zone.topLeftY + zone.heightUnit;i++){
                     for(let j = zone.topLeftX; j < zone.topLeftX + zone.widthUnit;j++){
@@ -46,7 +44,7 @@
             })
         });
     }
-
+    //create room borders and create entrance border
     function  createBorder(roomsData) {
         roomsData.forEach(function (room) {
             room.zones.forEach(function (zone) {
@@ -83,7 +81,6 @@
                         else{
                             unit.style.borderBottom = borderStyle;
                         }
-
                         //right
                         neighborCell = document.getElementById("x"+(j+1)+"y"+i);
                         if(null !== neighborCell){
@@ -129,156 +126,177 @@
         })
     }
 
- function generateCorridor() {
-        for(let i = 0;i<flourWidth;i++){
-            for(let j = 0;j<flourHeight;j++){
-               let cell =  document.getElementById("x"+j+"y"+i);
-               let type = cell.getAttribute('type');
-               if(type === 'corridor'){
-                   cell.setAttribute("name",floorUnitId+"x"+j+"y"+i);
-               }
+//this function will add to each room in dataMap his neighbor list.
+//and in addition will create a corridor object with his neighbors details and add him to dataMap list of object.
+function updateMapObject() {
+     //scanning the map and marking the corridor space units as unique name
+    generateCorridorIds();
+
+    for(let i = 0;i<flourWidth;i++){
+        for(let j = 0;j<flourHeight;j++){
+            let cell =  document.getElementById("x"+j+"y"+i);
+            let type = cell.getAttribute('type');
+            //creating a corridor object and adding his  neighbor to the him
+            if(type === 'corridor'){
+                //wil scan the corridor 4 sids and add his neighbors to him and add him to dataMap object.
+                createCorridorObject(i,j,cell);
+            }
+            else {
+                //the current cell is spaceUnit entrance
+                //will scan the spaceUnit entrance and connect the room entrance neighbor to the roomData in dataMap
+                updateSpaceUnitNeighbors(i,j,cell);
             }
         }
+    }
+ }
 
+    //this function will mark the corridor elements on the map with a special attribute- "name: floorId+x,x",
+    function generateCorridorIds() {
         for(let i = 0;i<flourWidth;i++){
             for(let j = 0;j<flourHeight;j++){
                 let cell =  document.getElementById("x"+j+"y"+i);
                 let type = cell.getAttribute('type');
-                let cellUnitId = cell.getAttribute('name');
-                let entrance = [];
                 if(type === 'corridor'){
-                    //up
-                    let neighborCell = document.getElementById("x"+j+"y"+(i-1));
-                    if(null !== neighborCell){
-                        if(neighborCell.getAttribute('type') === 'corridor'){
-                            entrance.push({
-                                neighborId:neighborCell.getAttribute('name'),
-                                approachable:1
-                            });
-                        }
-                        else{
-                            //checking if the neighbor cell is room entrance
-                            if(neighborCell.style.borderBottom === 'none'){
-                                entrance.push({
-                                    neighborId:neighborCell.getAttribute('name'),
-                                    approachable:1
-                                });
-                            }
-                        }
-                    }
-                    //left
-                    neighborCell = document.getElementById("x"+(j-1)+"y"+i);
-                    if(null !== neighborCell){
-                        if(neighborCell.getAttribute('type') === 'corridor'){
-                            entrance.push({
-                                neighborId:neighborCell.getAttribute('name'),
-                                approachable:1
-                            });
-                        }
-                        else{
-                            if(neighborCell.style.borderRight === 'none'){
-                                entrance.push({
-                                    neighborId:neighborCell.getAttribute('name'),
-                                    approachable:1
-                                });
-                            }
-                        }
-                    }
-                    //down
-                    neighborCell = document.getElementById("x"+j+"y"+(i+1));
-                    if(null !== neighborCell){
-                        if(neighborCell.getAttribute('type') === 'corridor'){
-                            entrance.push({
-                                neighborId:neighborCell.getAttribute('name'),
-                                approachable:1
-                            });
-                        }
-                        else{
-                            if(neighborCell.style.borderTop === 'none'){
-                                entrance.push({
-                                    neighborId:neighborCell.getAttribute('name'),
-                                    approachable:1
-                                });
-                            }
-                        }
-                    }
-                    //right
-                    neighborCell = document.getElementById("x"+(j+1)+"y"+i);
-                    if(null !== neighborCell){
-                        if(neighborCell.getAttribute('type') === 'corridor'){
-                            entrance.push({
-                                neighborId:neighborCell.getAttribute('name'),
-                                approachable:1
-                            });
-                        }
-                        else{
-                            if(neighborCell.style.borderLeft === 'none'){
-                                entrance.push({
-                                    neighborId:neighborCell.getAttribute('name'),
-                                    approachable:1
-                                });
-                            }
-                        }
-                    }
-
-                    let corridor = {
-                        id:cellUnitId,
-                        width:1,
-                        height:1,
-                        coordX:j,
-                        coordY:i,
-                        accessibility:1,
-                        parentId:floorUnitId,
-                        type:'corridor',
-                        entrance:entrance
-                    };
-                    dataMap.push(corridor);
+                    cell.setAttribute("name",floorUnitId+"x"+j+"y"+i);
                 }
-                else { //the current cell is room entrance
-                    let roomEntranceDirection = cell.getAttribute('roomEntranceDirection');
-                    let neighborCell;
-                    switch (roomEntranceDirection){
-                        case "left":
-                            neighborCell = document.getElementById("x"+(j-1)+"y"+i);
-                            entrance.push({
-                                neighborId:neighborCell.getAttribute('name'),
-                                approachable:1
-                            });
-                            break;
-                        case "right":
-                            neighborCell = document.getElementById("x"+(j+1)+"y"+i);
-                              break;
-                        case "up":
-                            neighborCell = document.getElementById("x"+j+"y"+(i-1));
-                            break;
-                        case "down":
-                            neighborCell = document.getElementById("x"+j+"y"+(i+1));
-                            break;
-                        default:
-                    }
-                    if(neighborCell!==null && neighborCell!==undefined){
-                        entrance.push({
-                          neighborId:neighborCell.getAttribute('name'),
-                          approachable:1
-                        });
-                        var spaceUnit = dataMap.find(function (spaceUnitObject) {
-                            return spaceUnitObject.id === cellUnitId
-                        });
-                        if(spaceUnit !== null && spaceUnit !== undefined){
-                            let targetEntrance = spaceUnit.entrance.find(function (entry) { //find the entrance in dataMap
-                                return entry.x === j && entry.y === i;
-                            });
-                            if(targetEntrance !== null && targetEntrance !== undefined){//successful result
-                                targetEntrance.neighborId = entrance[0].neighborId;
-                            }
-                        }
-                    }
-
-                }
-
             }
         }
     }
+
+function createCorridorObject(i,j,cell) {
+    let type = cell.getAttribute('type');
+    let cellUnitId = cell.getAttribute('name');
+    let entrance = [];
+    //up
+    let neighborCell = document.getElementById("x"+j+"y"+(i-1));
+    if(null !== neighborCell){
+        if(neighborCell.getAttribute('type') === 'corridor'){
+            entrance.push({
+                neighborId:neighborCell.getAttribute('name'),
+                approachable:1
+            });
+        }
+        else{
+            //checking if the neighbor cell is room entrance
+            if(neighborCell.style.borderBottom === 'none'){
+                entrance.push({
+                    neighborId:neighborCell.getAttribute('name'),
+                    approachable:1
+                });
+            }
+        }
+    }
+    //left
+    neighborCell = document.getElementById("x"+(j-1)+"y"+i);
+    if(null !== neighborCell){
+        if(neighborCell.getAttribute('type') === 'corridor'){
+            entrance.push({
+                neighborId:neighborCell.getAttribute('name'),
+                approachable:1
+            });
+        }
+        else{
+            if(neighborCell.style.borderRight === 'none'){
+                entrance.push({
+                    neighborId:neighborCell.getAttribute('name'),
+                    approachable:1
+                });
+            }
+        }
+    }
+    //down
+    neighborCell = document.getElementById("x"+j+"y"+(i+1));
+    if(null !== neighborCell){
+        if(neighborCell.getAttribute('type') === 'corridor'){
+            entrance.push({
+                neighborId:neighborCell.getAttribute('name'),
+                approachable:1
+            });
+        }
+        else{
+            if(neighborCell.style.borderTop === 'none'){
+                entrance.push({
+                    neighborId:neighborCell.getAttribute('name'),
+                    approachable:1
+                });
+            }
+        }
+    }
+    //right
+    neighborCell = document.getElementById("x"+(j+1)+"y"+i);
+    if(null !== neighborCell){
+        if(neighborCell.getAttribute('type') === 'corridor'){
+            entrance.push({
+                neighborId:neighborCell.getAttribute('name'),
+                approachable:1
+            });
+        }
+        else{
+            if(neighborCell.style.borderLeft === 'none'){
+                entrance.push({
+                    neighborId:neighborCell.getAttribute('name'),
+                    approachable:1
+                });
+            }
+        }
+    }
+    //creating the corridor object and add it to dataMap.
+    let corridor = {
+        id:cellUnitId,
+        width:1,
+        height:1,
+        coordX:j,
+        coordY:i,
+        accessibility:1,
+        parentId:floorUnitId,
+        type:'corridor',
+        entrance:entrance
+    };
+    dataMap.push(corridor);
+}
+
+function updateSpaceUnitNeighbors(i,j,cell) {
+    let cellUnitId = cell.getAttribute('name');
+    let entrance = [];
+    let roomEntranceDirection = cell.getAttribute('roomEntranceDirection');
+    let neighborCell;
+    switch (roomEntranceDirection){
+        case "left":
+            neighborCell = document.getElementById("x"+(j-1)+"y"+i);
+            break;
+        case "right":
+            neighborCell = document.getElementById("x"+(j+1)+"y"+i);
+            break;
+        case "up":
+            neighborCell = document.getElementById("x"+j+"y"+(i-1));
+            break;
+        case "down":
+            neighborCell = document.getElementById("x"+j+"y"+(i+1));
+            break;
+        default:
+    }
+    if(neighborCell!==null && neighborCell!==undefined){
+        entrance.push({
+            neighborId:neighborCell.getAttribute('name'),
+            approachable:1
+        });
+
+        //find the current room at the dataMap
+        var spaceUnit = dataMap.find(function (spaceUnitObject) {
+            return spaceUnitObject.id === cellUnitId
+        });
+
+        //connecting the room neighbor filed to the corridor object at dataMap
+        if(spaceUnit !== null && spaceUnit !== undefined){
+            let targetEntrance = spaceUnit.entrance.find(function (entry) { //find the entrance in dataMap
+                return entry.x === j && entry.y === i;
+            });
+            if(targetEntrance !== null && targetEntrance !== undefined){//successful result
+                targetEntrance.neighborId = entrance[0].neighborId;
+            }
+        }
+    }
+}
 
     function getJson() {
      var myXMLhttpReq = new XMLHttpRequest(),
@@ -288,11 +306,17 @@
      myXMLhttpReq.setRequestHeader("Content-type", "application/json");
      myXMLhttpReq.onreadystatechange = function() {
          if (myXMLhttpReq.readyState == XMLHttpRequest.DONE) {
-             dataMap = JSON.parse(myXMLhttpReq.responseText);
-             dataMap = dataMap.map;
+             var data = JSON.parse(myXMLhttpReq.responseText);
+             dataMap = data.map;
+             var floorObject = data.floorObject;
+             console.log(floorObject);
+             flourWidth = floorObject.width;
+             flourHeight = floorObject.height;
+             floorUnitId = floorObject.floorUnitId;
+             createFloor();
              createRooms(dataMap);
              createBorder(dataMap);
-             generateCorridor();
+             updateMapObject();
              var from = "2000";
              var to = "247";
             var mapData = {
@@ -316,12 +340,8 @@ function httpCall(domain,apiCall,data){
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         async: true,
-        success: function(msg) {
-         //   console.log(msg);
-        },
-        error:function (error) {
-        //    console.log(error);
-        }
+        success: function(msg) {},
+        error:function (error) {}
     });
 }
 

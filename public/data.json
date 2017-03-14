@@ -1,4 +1,9 @@
 {
+  "floorObject":{
+    "floorUnitId":54665,
+    "width":10,
+    "height":10
+  },
   "map":[
     {
       "id":"247",
