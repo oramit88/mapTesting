@@ -44,6 +44,7 @@
             })
         });
     }
+
     //create room borders and create entrance border
     function  createBorder(roomsData) {
         roomsData.forEach(function (room) {
@@ -99,7 +100,7 @@
             //drawing the room entrance
             if(room.entrance !== undefined){
                 room.entrance.forEach(function (entrance) {
-                    var unit =  document.getElementById("x"+entrance.x+"y"+entrance.y);
+                    var unit =  document.getElementById("x"+entrance.xExitPosition+"y"+entrance.yExitPosition);
                     var context  = unit.getContext('2d');
                     switch(entrance.direction) {
                         case "left":
@@ -215,6 +216,7 @@ function createCorridorObject(i,j,cell) {
         }
         else{
             if(neighborCell.style.borderTop === 'none'){
+                console.log(neighborCell.getAttribute('name'));
                 entrance.push({
                     neighborId:neighborCell.getAttribute('name'),
                     approachable:1
@@ -243,10 +245,12 @@ function createCorridorObject(i,j,cell) {
     //creating the corridor object and add it to dataMap.
     let corridor = {
         id:cellUnitId,
-        width:1,
-        height:1,
-        coordX:j,
-        coordY:i,
+        zones:[{
+            widthUnit:1,
+            heightUnit:1,
+            topLeftX:j,
+            topLeftY:i,
+        }],
         accessibility:1,
         parentId:floorUnitId,
         type:'corridor',
@@ -289,10 +293,10 @@ function updateSpaceUnitNeighbors(i,j,cell) {
         //connecting the room neighbor filed to the corridor object at dataMap
         if(spaceUnit !== null && spaceUnit !== undefined){
             let targetEntrance = spaceUnit.entrance.find(function (entry) { //find the entrance in dataMap
-                return entry.x === j && entry.y === i;
+                return entry.xExitPosition === j && entry.yExitPosition === i;
             });
             if(targetEntrance !== null && targetEntrance !== undefined){//successful result
-                targetEntrance.neighborId = entrance[0].neighborId;
+                targetEntrance.neighborId = entrance[0].neighborId;//todo change array entrance to object
             }
         }
     }
@@ -307,38 +311,45 @@ function updateSpaceUnitNeighbors(i,j,cell) {
      myXMLhttpReq.onreadystatechange = function() {
          if (myXMLhttpReq.readyState == XMLHttpRequest.DONE) {
              var data = JSON.parse(myXMLhttpReq.responseText);
-             dataMap = data.map;
              var floorObject = data.floorObject;
              console.log(floorObject);
-             flourWidth = floorObject.width;
-             flourHeight = floorObject.height;
-             floorUnitId = floorObject.floorUnitId;
+             dataMap = data.map;
+             flourWidth = floorObject.zones[0].widthUnit;
+             flourHeight = floorObject.zones[0].heightUnit;
+             floorUnitId = floorObject.id;
+             console.log(flourWidth);
+             console.log(flourHeight);
+             console.log(floorUnitId);
              createFloor();
              createRooms(dataMap);
              createBorder(dataMap);
              updateMapObject();
+             var dataToSend = {};
+             dataToSend.floorObject = floorObject;
+             dataToSend.floorSpaceUnits = dataMap;
              var from = "2000";
              var to = "247";
-            var mapData = {
-                mapData:dataMap
-            };
-             httpCall(domain,"/api/v1/mapConsumer/getPatch/"+from+"/"+to+"/1",mapData);
+            httpCall(domain,"/api/v1/mapProducer/floor",dataToSend,"POST");
+           //  httpCall(domain,"/api/v1/mapConsumer/getPatch/"+from+"/"+to+"/1",mapData,"GET");
          }
      };
      myXMLhttpReq.send();
  }
 
 
-function httpCall(domain,apiCall,data){
+function httpCall(domain,apiCall,data,type){
+    console.log('send data:');
+    console.log(data);
+    console.log(typeof data);
+    data = JSON.stringify(data);
     console.log(data);
     console.log(typeof data);
     $.ajax({
-        url: domain+apiCall,
+        url: domain+apiCall + "?floorData="+data,
         crossDomain:true,
-        type: 'GET',
-        data: data,
+        type: type,
         contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
+        dataType: 'string',
         async: true,
         success: function(msg) {},
         error:function (error) {}
